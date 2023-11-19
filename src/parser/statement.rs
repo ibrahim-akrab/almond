@@ -9,6 +9,8 @@ pub fn parse_stmt(s: Span) -> ParseResult<Node> {
     alt((
         parse_block,
         parse_var_stmt,
+        parse_let_stmt,
+        parse_const_stmt,
         parse_empty_stmt,
         parse_labeled_stmt, // labeled_stmt is before expr_stmt to prevent parsing label as an identifier expr_stmt
         parse_expr_stmt,
@@ -91,6 +93,53 @@ pub fn parse_var_stmt_no_semi(s: Span) -> ParseResult<Node> {
     )(s)
 }
 
+pub fn parse_let_stmt(s: Span) -> ParseResult<Node> {
+    map(
+        spanned(delimited(
+            ws1(keyword_let),
+            parse_declaration_list,
+            opt(ws0(semi)),
+        )),
+        |(declarations, start, end)| {
+            NodeKind::VariableDeclaration {
+                declarations,
+                kind: VariableDeclarationKind::Let,
+            }
+            .with_pos(start, end)
+        },
+    )(s)
+}
+
+pub fn parse_let_stmt_no_semi(s: Span) -> ParseResult<Node> {
+    map(
+        spanned(preceded(ws1(keyword_let), parse_declaration_list)),
+        |(declarations, start, end)| {
+            NodeKind::VariableDeclaration {
+                declarations,
+                kind: VariableDeclarationKind::Let,
+            }
+            .with_pos(start, end)
+        },
+    )(s)
+}
+
+pub fn parse_const_stmt(s: Span) -> ParseResult<Node> {
+    map(
+        spanned(delimited(
+            ws1(keyword_const),
+            parse_declaration_list,
+            opt(ws0(semi)),
+        )),
+        |(declarations, start, end)| {
+            NodeKind::VariableDeclaration {
+                declarations,
+                kind: VariableDeclarationKind::Const,
+            }
+            .with_pos(start, end)
+        },
+    )(s)
+}
+
 pub fn parse_empty_stmt(s: Span) -> ParseResult<Node> {
     map(spanned(ws0(tag(";"))), |(_, start, end)| {
         NodeKind::EmptyStatement.with_pos(start, end)
@@ -143,6 +192,7 @@ pub fn parse_iteration_stmt(s: Span) -> ParseResult<Node> {
         parse_while_stmt,
         parse_for_stmt,
         parse_for_in_stmt,
+        parse_for_of_stmt,
     ))(s)
 }
 
@@ -193,7 +243,7 @@ pub fn parse_for_stmt(s: Span) -> ParseResult<Node> {
                 pair(ws0(keyword_for), ws0(tag("("))),
                 tuple((
                     terminated(
-                        opt(alt((parse_var_stmt_no_semi, parse_expr))),
+                        opt(alt((parse_var_stmt_no_semi, parse_let_stmt_no_semi, parse_expr))),
                         ws0(tag(";")),
                     ),
                     terminated(opt(parse_expr), ws0(tag(";"))),
@@ -221,7 +271,7 @@ pub fn parse_for_in_stmt(s: Span) -> ParseResult<Node> {
             delimited(
                 pair(ws0(keyword_for), ws0(tag("("))),
                 separated_pair(
-                    alt((|s| parse_expr_bp(s, 25 /* no in */, false), parse_var_stmt)),
+                    alt((|s| parse_expr_bp(s, 25 /* no in */, false), parse_var_stmt, parse_let_stmt, parse_const_stmt)),
                     ws0(keyword_in),
                     parse_expr,
                 ),
@@ -231,6 +281,31 @@ pub fn parse_for_in_stmt(s: Span) -> ParseResult<Node> {
         )),
         |(((left, right), body), start, end)| {
             NodeKind::ForInStatement {
+                left: Box::new(left),
+                right: Box::new(right),
+                body: Box::new(body),
+            }
+            .with_pos(start, end)
+        },
+    )(s)
+}
+
+pub fn parse_for_of_stmt(s: Span) -> ParseResult<Node> {
+    map(
+        spanned(pair(
+            delimited(
+                pair(ws0(keyword_for), ws0(tag("("))),
+                separated_pair(
+                    alt((|s| parse_expr_bp(s, 25 /* no in */, false), parse_var_stmt, parse_let_stmt, parse_const_stmt)),
+                    ws0(keyword_of),
+                    parse_expr,
+                ),
+                ws0(tag(")")),
+            ),
+            parse_stmt,
+        )),
+        |(((left, right), body), start, end)| {
+            NodeKind::ForOfStatement {
                 left: Box::new(left),
                 right: Box::new(right),
                 body: Box::new(body),

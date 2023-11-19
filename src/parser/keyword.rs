@@ -276,6 +276,9 @@ pub fn keyword_throw(s: Span) -> ParseResult<()> {
 pub fn keyword_delete(s: Span) -> ParseResult<()> {
     value((), pair(tag("delete"), not(identifier_continue)))(s)
 }
+pub fn keyword_of(s: Span) -> ParseResult<()> {
+    value((), pair(tag("of"), not(identifier_continue)))(s)
+}
 pub fn keyword_in(s: Span) -> ParseResult<()> {
     value((), pair(tag("in"), not(identifier_continue)))(s)
 }

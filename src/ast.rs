@@ -41,6 +41,8 @@ pub struct Function<'a> {
 #[derive(Debug, PartialEq, Clone)]
 pub enum VariableDeclarationKind {
     Var,
+    r#Let,
+    Const
 }
 
 impl Serialize for VariableDeclarationKind {
@@ -50,6 +52,8 @@ impl Serialize for VariableDeclarationKind {
     {
         let s = match self {
             VariableDeclarationKind::Var => "var",
+            VariableDeclarationKind::Let => "let",
+            VariableDeclarationKind::Const => "const"
         };
 
         serializer.serialize_str(s)
@@ -429,6 +433,15 @@ pub enum NodeKind<'a> {
     },
     /// A `for`/`in` statement.
     ForInStatement {
+        /// `type: VariableDeclaration |  Pattern`
+        left: Box<Node<'a>>,
+        /// `type: Expression`
+        right: Box<Node<'a>>,
+        /// `type: Statement`
+        body: Box<Node<'a>>,
+    },
+    /// A `for`/`of` statement.
+    ForOfStatement {
         /// `type: VariableDeclaration |  Pattern`
         left: Box<Node<'a>>,
         /// `type: Expression`
