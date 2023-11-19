@@ -10,7 +10,13 @@ Some obscure syntax might not parse correctly yet. If you find a bug, please con
 ## Implementation Progress
 
 - [x] ES5
-- [ ] ES2015 (ES6)
+- [.] ES2015 (ES6)
+    [ ] programs
+    [ ] functions
+    [x] statements
+    [x] declarations
+    [ ] expressions
+    [ ] ...
 - [x] ES2016 (ES7)
 - [x] ES2017
 - [ ] ES2018
