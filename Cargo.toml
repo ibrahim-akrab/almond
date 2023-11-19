@@ -26,7 +26,7 @@ unicode-xid = "0.2.1"
 
 [dev-dependencies]
 criterion = "0.3.3"
-insta = "1.1.0"
+insta = {version = "1.1.0", features = ['json']}
 
 [profile.release]
 # Uncomment the following line to debug in release mode.
